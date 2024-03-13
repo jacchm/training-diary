@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:4.4.26
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+  training-service:
+    build: ./training-diary-training
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    env_file:
+      - ./local.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+  measurement-service:
+    build: ./training-diary-measurement
+    env_file:
+      - ./local.env
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mongo
+  user-service:
+    build: ./training-diary-user
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    env_file:
+      - ./local.env
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongo
+  frontend:
+    build: ./training-diary-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+          - training-service
+          - measurement-service
+          - user-service
+volumes:
+  mongo-data:
